@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+@theme {
+    --animate-typing-bounce: typing-bounce 1s infinite ease-in-out;
+    --animate-message-in: message-in 0.2s ease-out;
+}
+
+@keyframes typing-bounce {
+    0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.5;
+    }
+    30% {
+        transform: translateY(-3px);
+        opacity: 1;
+    }
+}
+
+@keyframes message-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+html,
+body,
+#app {
+    height: 100%;
+}

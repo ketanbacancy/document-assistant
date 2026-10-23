@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Assistant — Architecture Overview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #0b1120;
+      color: #f8fafc;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      background-image: 
+        radial-gradient(circle at 10% 10%, rgba(20, 184, 166, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 90% 90%, rgba(99, 102, 241, 0.1) 0%, transparent 40%);
+    }
+
+    header {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 48px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(12px);
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: -0.01em;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #0d9488, #06b6d4);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .indicator {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fff;
+      padding: 7px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      background: rgba(20, 184, 166, 0.2);
+      border-color: #14b8a6;
+    }
+
+    main {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 48px;
+    }
+
+    .slide {
+      position: absolute;
+      width: 100%;
+      max-width: 1360px;
+      opacity: 0;
+      transform: scale(0.98);
+      pointer-events: none;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(20, 184, 166, 0.15);
+      border: 1px solid rgba(20, 184, 166, 0.35);
+      color: #5eead4;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+    }
+
+    .title {
+      font-size: 3rem;
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #ffffff 40%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
+    }
+
+    .desc {
+      font-size: 1.15rem;
+      color: #94a3b8;
+      max-width: 900px;
+      line-height: 1.6;
+      margin-bottom: 36px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      width: 100%;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      width: 100%;
+    }
+
+    .card {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(51, 65, 85, 0.6);
+      border-radius: 16px;
+      padding: 24px;
+      backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 220px;
+      transition: all 0.2s ease;
+    }
+
+    .card:hover {
+      border-color: rgba(20, 184, 166, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .icon-box {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .icon-box.teal { background: rgba(20, 184, 166, 0.2); color: #2dd4bf; }
+    .icon-box.cyan { background: rgba(6, 182, 212, 0.2); color: #22d3ee; }
+    .icon-box.indigo { background: rgba(99, 102, 241, 0.2); color: #818cf8; }
+    .icon-box.amber { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+
+    .card-heading {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+
+    .card-body {
+      font-size: 0.9rem;
+      color: #94a3b8;
+      line-height: 1.55;
+      margin-bottom: 16px;
+    }
+
+    .tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.76rem;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 4px 10px;
+      border-radius: 6px;
+      color: #99f6e4;
+      width: fit-content;
+      border: 1px solid rgba(20, 184, 166, 0.25);
+    }
+
+    .hint {
+      position: fixed;
+      bottom: 20px;
+      right: 48px;
+      font-size: 0.8rem;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .key {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-icon">📄</div>
+      <span>Document Assistant (RAG Chatbot)</span>
+    </div>
+    <div class="controls">
+      <span class="indicator" id="indicator">Slide 1 of 3</span>
+      <button class="btn" id="prevBtn">← Previous</button>
+      <button class="btn" id="nextBtn">Next →</button>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Slide 1: Tech Stack -->
+    <div class="slide active" id="slide-1">
+      <div class="badge-pill">⚡ Retrieval-Augmented Generation</div>
+      <h1 class="title">Document Assistant Architecture</h1>
+      <p class="desc">
+        A private, document-scoped Q&A system. Features local Ollama embeddings, visual PDF chart reading via vision models, and real-time streaming answers grounded strictly in individual reports.
+      </p>
+      <div class="grid-4">
+        <div class="card">
+          <div>
+            <div class="card-top">
+              <div class="icon-box teal">⚙️</div>
+              <h3 class="card-heading">Laravel 13</h3>
+            </div>
+            <p class="card-body">PHP 8.3 backend orchestrating document parsing, SQLite cosine vector search, and Server-Sent Event streaming.</p>
+          </div>
+          <span class="tag">DocumentIngestionService.php</span>
+        </div>
+        <div class="card">
+          <div>
+            <div class="card-top">
+              <div class="icon-box cyan">⚛️</div>
+              <h3 class="card-heading">React 19 + Tailwind</h3>
+            </div>
+            <p class="card-body">Document picker, top-bar switcher dropdown, recency-grouped chat sidebar, and live stream decoder.</p>
+          </div>
+          <span class="tag">ChatWindow.jsx</span>
+        </div>
+        <div class="card">
+          <div>
+            <div class="card-top">
+              <div class="icon-box indigo">🦙</div>
+              <h3 class="card-heading">Local Ollama Stack</h3>
+            </div>
+            <p class="card-body">100% free offline embeddings via nomic-embed-text and visual PDF chart reading via qwen2.5vl:3b.</p>
+          </div>
+          <span class="tag">Ollama Local API</span>
+        </div>
+        <div class="card">
+          <div>
+            <div class="card-top">
+              <div class="icon-box amber">🤖</div>
+              <h3 class="card-heading">Google Gemini</h3>
+            </div>
+            <p class="card-body">Gemini 3.5 Flash Lite generates grounded answers with strict zero-hallucination guardrails.</p>
+          </div>
+          <span class="tag">gemini-3.5-flash-lite</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 2: Chart Vision Pipeline -->
+    <div class="slide" id="slide-2">
+      <div class="badge-pill">🔍 Visual Document Intelligence</div>
+      <h1 class="title">Multi-Modal Ingestion & Chart Vision</h1>
+      <p class="desc">
+        Traditional RAG systems miss critical charts, graphs, and visual figures. Document Assistant bridges this gap with an automated local vision pipeline.
+      </p>
+      <div class="grid-3">
+        <div class="card">
+          <div>
+            <div class="card-top">
+              <div class="icon-box teal">1</div>
+              <h3 class="card-heading">Text & Figure Detection</h3>
+            </div>
+            <p class="card-body">Extracts plain text from PDF/DOCX. Pages containing the word "FIGURE" are flagged for vision inspection.</p>
+          </div>
+          <span class="tag">DocumentParserService.php</span>
+        </div>
+        <div class="card">
+          <div>
+            <div class="card-top">
+              <div class="icon-box cyan">2</div>
+              <h3 class="card-heading">PDF Page Rasterization</h3>
+            </div>
+            <p class="card-body">PyMuPDF renders figure pages to high-res PNG images without requiring external heavy rasterizer binaries.</p>
+          </div>
+          <span class="tag">render_pdf_page.py</span>
+        </div>
+        <div class="card">
+          <div>
+            <div class="card-top">
+              <div class="icon-box indigo">3</div>
+              <h3 class="card-heading">Vision Model Transcription</h3>
+            </div>
+            <p class="card-body">Local qwen2.5vl:3b transcribes chart values into text chunks appended to SQLite for semantic search.</p>
+          </div>
+          <span class="tag">ChartVisionService.php</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: 3 Demonstrated Use Cases -->
+    <div class="slide" id="slide-3">
+      <div class="badge-pill">📊 Evaluation Benchmark</div>
+      <h1 class="title">3 Real-World Document Use Cases</h1>
+      <p class="desc">
+        Demonstrating accurate factual grounding across diverse document types and structures.
+      </p>
+      <div class="grid-3">
+        <div class="card">
+          <div>
+            <div class="card-top">
+              <div class="icon-box teal">📋</div>
+              <h3 class="card-heading">Use Case 1: Plain-Text Report</h3>
+            </div>
+            <p class="card-body"><strong>GPO 2018 Annual Report</strong><br>Answers questions on 166 depository library visits, govinfo replacing FDsys, and $375.7M procurement.</p>
+          </div>
+          <span class="tag">294 Chunks Indexed</span>
+        </div>
+        <div class="card">
+          <div>
+            <div class="card-top">
+              <div class="icon-box indigo">📈</div>
+              <h3 class="card-heading">Use Case 2: Long Report</h3>
+            </div>
+            <p class="card-body"><strong>World Bank Economic Prospects</strong><br>Navigates South Asia growth outlook (6.3%), Chapter 3 sovereign debt spreads, and global downside risks.</p>
+          </div>
+          <span class="tag">924 Chunks Indexed</span>
+        </div>
+        <div class="card">
+          <div>
+            <div class="card-top">
+              <div class="icon-box cyan">🍏</div>
+              <h3 class="card-heading">Use Case 3: Visual Document</h3>
+            </div>
+            <p class="card-body"><strong>iMac Environmental Report</strong><br>Retrieves chart data: 58% less energy vs ENERGY STAR, 346 kg carbon footprint, and 100% recycled aluminum.</p>
+          </div>
+          <span class="tag">42 Chunks + Visual Charts</span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <div class="hint">
+    Use <span class="key">←</span> <span class="key">→</span> to navigate
+  </div>
+
+  <script>
+    let cur = 0;
+    const slides = document.querySelectorAll('.slide');
+    const indicator = document.getElementById('indicator');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    function update(idx) {
+      if (idx < 0 || idx >= slides.length) return;
+      slides[cur].classList.remove('active');
+      cur = idx;
+      slides[cur].classList.add('active');
+      indicator.textContent = `Slide ${cur + 1} of ${slides.length}`;
+      prevBtn.disabled = cur === 0;
+      nextBtn.disabled = cur === slides.length - 1;
+    }
+
+    prevBtn.addEventListener('click', () => update(cur - 1));
+    nextBtn.addEventListener('click', () => update(cur + 1));
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'Space') update(cur + 1);
+      else if (e.key === 'ArrowLeft') update(cur - 1);
+    });
+
+    update(0);
+  </script>
+</body>
+</html>
