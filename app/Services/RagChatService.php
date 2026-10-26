@@ -35,7 +35,12 @@ TEXT;
         private EmbeddingService $embedder,
         private VectorSearchService $vectorSearch,
         private GeminiChatService $chatService,
-        private int $topK = 4,
+        // Raised from 4 after observing a correct answer's score fall just
+        // 0.0002 short of the cutoff (0.5945 vs 0.5947) — embedding
+        // similarity differences that small are effectively noise, not a
+        // meaningful relevance signal, so a slightly wider net avoids
+        // dropping borderline-but-correct chunks.
+        private int $topK = 6,
     ) {}
 
     /**

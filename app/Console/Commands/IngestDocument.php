@@ -48,16 +48,30 @@ class IngestDocument extends Command
 
         $this->info("Parsing \"{$filename}\" and scanning for figures...");
 
-        $document = $ingestionService->ingestFromPath($path, $filename, function (int $current, int $total, int $pageNumber, string $status) {
-            $label = match ($status) {
-                'processing' => 'reading chart(s)...',
-                'found' => 'chart data found',
-                'none' => 'no chart data',
-                'skipped' => 'skipped (render/describe failed)',
-            };
+        $document = $ingestionService->ingestFromPath(
+            $path,
+            $filename,
+            function (int $current, int $total, int $pageNumber, string $status) {
+                $label = match ($status) {
+                    'processing' => 'reading chart(s)...',
+                    'found' => 'chart data found',
+                    'none' => 'no chart data',
+                    'skipped' => 'skipped (render/describe failed)',
+                };
 
-            $this->line("  [{$current}/{$total}] page {$pageNumber} — {$label}");
-        });
+                $this->line("  [chart {$current}/{$total}] page {$pageNumber} — {$label}");
+            },
+            function (int $current, int $total, int $pageNumber, string $status) {
+                $label = match ($status) {
+                    'processing' => 'describing image(s)...',
+                    'found' => 'image description found',
+                    'none' => 'no meaningful image content',
+                    'skipped' => 'skipped (render/describe failed)',
+                };
+
+                $this->line("  [image {$current}/{$total}] page {$pageNumber} — {$label}");
+            },
+        );
 
         $this->info('Chunking and embedding the full text locally via Ollama...');
 
